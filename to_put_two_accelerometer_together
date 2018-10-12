@@ -1,0 +1,103 @@
+#include <Wire.h>
+#include <SPI.h>
+#include <Adafruit_LSM9DS1.h>
+#include <Adafruit_Sensor.h>  // not used in this demo but required!
+
+
+
+// i2c
+Adafruit_LSM9DS1 sensorLeft = Adafruit_LSM9DS1(0x1C);
+Adafruit_LSM9DS1 sensorRight = Adafruit_LSM9DS1(0x1E);
+
+
+void setupSensorLeft()
+{
+  // 1.) Set the accelerometer range
+  sensorLeft.setupAccel(sensorLeft.LSM9DS1_ACCELRANGE_2G);
+  //lsm.setupAccel(lsm.LSM9DS1_ACCELRANGE_4G);
+  //lsm.setupAccel(lsm.LSM9DS1_ACCELRANGE_8G);
+  //lsm.setupAccel(lsm.LSM9DS1_ACCELRANGE_16G);
+  
+  // 2.) Set the magnetometer sensitivity
+  //lsm.setupMag(lsm.LSM9DS1_MAGGAIN_4GAUSS);
+  //lsm.setupMag(lsm.LSM9DS1_MAGGAIN_8GAUSS);
+  //lsm.setupMag(lsm.LSM9DS1_MAGGAIN_12GAUSS);
+  sensorLeft.setupMag(sensorLeft.LSM9DS1_MAGGAIN_16GAUSS);
+
+  // 3.) Setup the gyroscope
+  sensorLeft.setupGyro(sensorLeft.LSM9DS1_GYROSCALE_245DPS);
+  //lsm.setupGyro(lsm.LSM9DS1_GYROSCALE_500DPS);
+  //lsm.setupGyro(lsm.LSM9DS1_GYROSCALE_2000DPS);
+}
+
+void setupSensorRight()
+{
+  // 1.) Set the accelerometer range
+  sensorRight.setupAccel(sensorRight.LSM9DS1_ACCELRANGE_2G);
+  //lsm.setupAccel(lsm.LSM9DS1_ACCELRANGE_4G);
+  //lsm.setupAccel(lsm.LSM9DS1_ACCELRANGE_8G);
+  //lsm.setupAccel(lsm.LSM9DS1_ACCELRANGE_16G);
+  
+  // 2.) Set the magnetometer sensitivity
+  //lsm.setupMag(lsm.LSM9DS1_MAGGAIN_4GAUSS);
+  //lsm.setupMag(lsm.LSM9DS1_MAGGAIN_8GAUSS);
+  //lsm.setupMag(lsm.LSM9DS1_MAGGAIN_12GAUSS);
+  sensorRight.setupMag(sensorRight.LSM9DS1_MAGGAIN_16GAUSS);
+
+  // 3.) Setup the gyroscope
+  sensorRight.setupGyro(sensorRight.LSM9DS1_GYROSCALE_245DPS);
+  //lsm.setupGyro(lsm.LSM9DS1_GYROSCALE_500DPS);
+  //lsm.setupGyro(lsm.LSM9DS1_GYROSCALE_2000DPS);
+}
+
+
+void setup() 
+{
+  Serial.begin(9600);
+
+  while (!Serial) {
+    delay(1); // will pause Zero, Leonardo, etc until serial console opens
+  }
+  
+  Serial.println("LSM9DS1 data read demo");
+  
+  // Try to initialise and warn if we couldn't detect the chip
+  if (!sensorLeft.begin())
+  {
+    Serial.println("Oops ... unable to initialize the LSM9DS1. Check your wiring!");
+    while (1);
+  }
+  
+  Serial.println("Found LSM9DS1 9DOF");
+
+  // helper to just set the default scaling we want, see above!
+  setupSensorLeft();
+  setupSensorRight();
+}
+
+void loop() 
+{
+  sensorRight.read();
+  sensorLeft.read();
+
+  /* Get a new sensor event */ 
+  sensors_event_t aLeft, mLeft, gLeft, tempLeft;
+  sensors_event_t aRight, mRight, gRight, tempRight;
+
+  sensorLeft.getEvent(&aLeft, &mLeft, &gLeft, &tempLeft); 
+  sensorRight.getEvent(&aRight, &mRight, &gRight, &tempRight);
+
+  //Serial.print("\tReading: "); Serial.print(aLeft.magnetic.z);     Serial.println(" gauss");
+  //Serial.print("\tReading: "); Serial.print(aRight.magnetic.z);     Serial.println(" gauss");
+
+  Serial.print("Accel X: "); Serial.print(aLeft.acceleration.x); Serial.print(" m/s^2");
+  Serial.print("\tY: "); Serial.print(aLeft.acceleration.y);     Serial.print(" m/s^2 ");
+  Serial.print("\tZ: "); Serial.print(aLeft.acceleration.z);     Serial.println(" m/s^2 ");
+
+  Serial.print("Accel X: "); Serial.print(aRight.acceleration.x); Serial.print(" m/s^2");
+  Serial.print("\tY: "); Serial.print(aRight.acceleration.y);     Serial.print(" m/s^2 ");
+  Serial.print("\tZ: "); Serial.print(aRight.acceleration.z);     Serial.println(" m/s^2 ");
+  
+  Serial.println();
+  delay(200);
+}
