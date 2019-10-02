@@ -82,6 +82,7 @@ const int FLEX_PIN9 = A9; // Pin connected to voltage divider output
 const int FLEX_PIN10 = A10; // Pin connected to voltage divider output
 const int FLEX_PIN11 = A11; // Pin connected to voltage divider output
 const int buttonPin = 2;     // the number of the pushbutton pin
+const int squareSignFromArduino = 3;
 const int ledPin =  13;      // the number of the LED pin
 const int BNC_QuattrocentoPin =  10;      // the number of the pin to signal to the Quattrocento
                                           // that the aquisition is starting
@@ -163,12 +164,14 @@ void setupSensor()
 void setup() {
 
   Serial.begin(115200);
-  
+
    // initialize the LED pin as an output:
   pinMode(ledPin, OUTPUT);
   // initialize the BNC pin as an output:
   pinMode(BNC_QuattrocentoPin, OUTPUT);
-  // initialize the pushbutton pin as an input:
+  // initialize the pin connected to the syncro Arduino as input and enable the internal pull-up resistor:
+  pinMode(squareSignFromArduino, INPUT_PULLUP);
+  // initialize the pushbutton pin as input:
   pinMode(buttonPin, INPUT);
   // initialize the flex sensors pins as inputs:
   pinMode(FLEX_PIN0, INPUT);
@@ -217,7 +220,9 @@ void setup() {
 }
 
 void loop() {
-  double dT;
+  // When you receive an input from the Arduino, start saving the data
+  int record = digitalRead(squareSignFromArduino);
+  double dT;   // to calculate variations of angle and acceleration
   lsm.read();  // ask it to read in the data 
 
   // Get a new sensor event
@@ -303,29 +308,35 @@ void loop() {
     Serial.print(unfiltered_gyro_angle_y, 2);
     Serial.print(F(","));
     Serial.print(unfiltered_gyro_angle_z, 2);*/
-  Serial.print(F("Angle with respect to the horizontal:"));      //Filtered angle
-  Serial.print(angle_x, 2);
-  Serial.print(F(","));
-  Serial.print(angle_y, 2);
-  Serial.print(F(","));
-  Serial.print(angle_z, 2);
-  Serial.println(F(""));
 
-  Serial.println("Flex sensor 0, bend: " + String(angle_0) + " degrees");
-  Serial.println("Flex sensor 1, bend: " + String(angle_1) + " degrees");
-  Serial.println("Flex sensor 2, bend: " + String(angle_2) + " degrees");
-  Serial.println("Flex sensor 3, bend: " + String(angle_3) + " degrees");
-  Serial.println("Flex sensor 6, bend: " + String(angle_6) + " degrees");
-  Serial.println("Flex sensor 7, bend: " + String(angle_7) + " degrees");
-  Serial.println("Flex sensor 8, bend: " + String(angle_8) + " degrees");
-  Serial.println("Flex sensor 9, bend: " + String(angle_9) + " degrees");
-  Serial.println("Flex sensor 10, bend: " + String(angle_10) + " degrees");  
-  Serial.println("Flex sensor 11, bend: " + String(angle_11) + " degrees");
+  // Following code get executed when receiving the square wave
+  if (record == HIGH) {
+    // FOR FIRMAN: THIS IS THE PART THAT SHOULD BE SAVED, EVERYTHING PRINTED IN HERE
+    Serial.print(F("Angle with respect to the horizontal:"));      //Filtered angle
+    Serial.print(angle_x, 2);
+    Serial.print(F(","));
+    Serial.print(angle_y, 2);
+    Serial.print(F(","));
+    Serial.print(angle_z, 2);
+    Serial.println(F(""));
+  
+    Serial.println("Flex sensor 0, bend: " + String(angle_0) + " degrees");
+    Serial.println("Flex sensor 1, bend: " + String(angle_1) + " degrees");
+    Serial.println("Flex sensor 2, bend: " + String(angle_2) + " degrees");
+    Serial.println("Flex sensor 3, bend: " + String(angle_3) + " degrees");
+    Serial.println("Flex sensor 6, bend: " + String(angle_6) + " degrees");
+    Serial.println("Flex sensor 7, bend: " + String(angle_7) + " degrees");
+    Serial.println("Flex sensor 8, bend: " + String(angle_8) + " degrees");
+    Serial.println("Flex sensor 9, bend: " + String(angle_9) + " degrees");
+    Serial.println("Flex sensor 10, bend: " + String(angle_10) + " degrees");  
+    Serial.println("Flex sensor 11, bend: " + String(angle_11) + " degrees");
+  
+    Serial.println();
+  
+    Serial.println("The time now is: " + String(millis()) + " ms");
+  }
 
-  Serial.println();
-
-  Serial.println("The time now is: " + String(millis()) + " ms");
-
+  
   //The following code is to check for when calibration should be performed
   // read the pushbutton input pin:
   buttonState = digitalRead(buttonPin);
@@ -345,7 +356,7 @@ void loop() {
   lastButtonState = buttonState;
 
   // Delay so we don't swamp the serial port
-  delay(5);
+  //delay(5);
 }
 
 
@@ -368,6 +379,9 @@ void Calibration() {
   delay(200);             
   digitalWrite(ledPin, LOW);    
   delay(200); 
+
+  // Reset all the values of the accelerometer and gyroscope
+  set_last_read_angle_data(millis(), 0, 0, 0, 0, 0, 0);
 
   // Leave LED on during aquisition of resistance
   digitalWrite(ledPin, HIGH);  
